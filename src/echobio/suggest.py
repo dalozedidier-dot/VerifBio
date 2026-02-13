@@ -11,7 +11,9 @@ def suggest_predictions(spec: ClaimSpec) -> dict[str, Any]:
     if not spec.b3 or not spec.b3.causal_model.statements:
         return {
             "suggestions": suggestions,
-            "notes": ["No causal statements found; add B3.causal_model.statements first."],
+            "notes": [
+            "No causal statements found; add B3.causal_model.statements first.",
+        ],
         }
 
     # Heuristic: for each statement "A -> B", propose perturbation of A and B
@@ -24,7 +26,10 @@ def suggest_predictions(spec: ClaimSpec) -> dict[str, Any]:
                 suggestions.append(_mk_pred(f"S{idx}A", a, b))
                 suggestions.append(_mk_pred(f"S{idx}B", b, "outcome"))
 
-    return {"suggestions": suggestions, "notes": ["Heuristic suggestions; refine to be quantitative."]}
+    return {
+        "suggestions": suggestions,
+        "notes": ["Heuristic suggestions; refine to be quantitative."],
+    }
 
 
 def _mk_pred(pred_id: str, target: str, downstream: str) -> dict[str, Any]:

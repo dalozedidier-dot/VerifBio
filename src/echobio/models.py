@@ -5,7 +5,6 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 
-
 class I18nText(BaseModel):
     language: str = Field(description="BCP-47-ish language tag, e.g. en, fr, es, zh")
     text: str

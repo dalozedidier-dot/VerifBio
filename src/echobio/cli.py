@@ -73,35 +73,56 @@ def main() -> None:
     )
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    p_audit = sub.add_parser("audit", help="Audit a claim YAML spec and output a JSON report.")
+    p_audit = sub.add_parser(
+        "audit",
+        help="Audit a claim YAML spec and output a JSON report.",
+    )
     p_audit.add_argument("input", help="Path to claim YAML (recommended).")
     p_audit.add_argument(
         "--mode",
         choices=["lite", "strict"],
         default="strict",
-        help="Audit mode. 'lite' is more permissive for teaching; 'strict' is reviewer-grade.",
+        help=(
+            "Audit mode. 'lite' is more permissive for teaching; "
+            "'strict' is reviewer-grade."
+        ),
     )
     p_audit.add_argument("--out", help="Write report JSON to this path.")
     p_audit.set_defaults(func=_cmd_audit)
 
-    p_export = sub.add_parser("export", help="Export an audit JSON report as markdown or latex.")
-    p_export.add_argument("report", help="Path to report JSON (output of 'echobio audit').")
+    p_export = sub.add_parser(
+        "export",
+        help="Export an audit JSON report as markdown or latex.",
+    )
+    p_export.add_argument(
+        "report",
+        help="Path to report JSON (output of 'echobio audit').",
+    )
     p_export.add_argument("--format", choices=["markdown", "latex"], default="markdown")
     p_export.add_argument("--out", help="Write export to this path.")
     p_export.set_defaults(func=_cmd_export)
 
-    p_dag = sub.add_parser("dag", help="Export DAG from claim (mermaid or graphviz dot).")
+    p_dag = sub.add_parser(
+        "dag",
+        help="Export DAG from claim (mermaid or graphviz dot).",
+    )
     p_dag.add_argument("input", help="Path to claim YAML.")
     p_dag.add_argument("--format", choices=["mermaid", "dot"], default="mermaid")
     p_dag.add_argument("--out", help="Write DAG to this path.")
     p_dag.set_defaults(func=_cmd_dag)
 
-    p_suggest = sub.add_parser("suggest", help="Suggest independent predictions (heuristic).")
+    p_suggest = sub.add_parser(
+        "suggest",
+        help="Suggest independent predictions (heuristic).",
+    )
     p_suggest.add_argument("input", help="Path to claim YAML.")
     p_suggest.add_argument("--out", help="Write suggestions JSON to this path.")
     p_suggest.set_defaults(func=_cmd_suggest)
 
-    p_draft = sub.add_parser("draft", help="Draft a claim YAML from raw text (heuristic).")
+    p_draft = sub.add_parser(
+        "draft",
+        help="Draft a claim YAML from raw text (heuristic).",
+    )
     group = p_draft.add_mutually_exclusive_group(required=True)
     group.add_argument("--text", help="Path to a text file (abstract, intro, notes).")
     group.add_argument("--inline", help="Inline text string.")
