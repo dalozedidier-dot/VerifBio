@@ -10,6 +10,8 @@ from .scoring import weighted_score
 LevelStatus = Literal["pass", "partial", "fail"]
 Mode = Literal["lite", "strict"]
 
+_RRID_RE = re.compile(r"^RRID:([A-Za-z0-9_]+)$")
+
 
 @dataclass(frozen=True)
 class CheckResult:
@@ -34,9 +36,6 @@ def _status_from_checks(checks: list[CheckResult]) -> LevelStatus:
     return "pass"
 
 
-_RRID_RE = re.compile(r"^RRID:([A-Za-z0-9_]+)$")
-
-
 def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
     levels: dict[str, LevelReport] = {}
 
@@ -46,7 +45,13 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
     b1_checks: list[CheckResult] = []
 
     if not spec.b1.entities:
-        b1_checks.append(CheckResult("B1.entities.present", "fail", "No entities declared"))
+        b1_checks.append(
+            CheckResult(
+                "B1.entities.present",
+                "fail",
+                "No entities declared",
+            )
+        )
     else:
         b1_checks.append(CheckResult("B1.entities.present", "pass"))
 
@@ -80,9 +85,11 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
         status=b1_status,
         checks=b1_checks,
         reasons=[c.message for c in b1_checks if c.status == "fail" and c.message],
-        suggestions=["Specify measurement operationalizations for exposure/outcome"]
-        if b1_status != "pass"
-        else [],
+        suggestions=(
+            ["Specify measurement operationalizations for exposure/outcome"]
+            if b1_status != "pass"
+            else []
+        ),
     )
 
     # -----------------
@@ -95,7 +102,7 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
             reasons=["B2 section missing"],
             suggestions=[
                 "Declare biological scale, model validity, and boundaries "
-                "(time/spatial/generalization limits)"
+                "(time/spatial/generalization limits)",
             ],
         )
     else:
@@ -103,7 +110,11 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
 
         if spec.b2.biological_scale.lower() in {"unspecified", "", "na"}:
             b2_checks.append(
-                CheckResult("B2.scale.declared", "fail", "Biological scale unspecified")
+                CheckResult(
+                    "B2.scale.declared",
+                    "fail",
+                    "Biological scale unspecified",
+                )
             )
         else:
             b2_checks.append(CheckResult("B2.scale.declared", "pass"))
@@ -113,7 +124,11 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
             or "not specified" in spec.b2.model_system.description.lower()
         ):
             b2_checks.append(
-                CheckResult("B2.model_system.defined", "fail", "Model system not defined")
+                CheckResult(
+                    "B2.model_system.defined",
+                    "fail",
+                    "Model system not defined",
+                )
             )
         else:
             b2_checks.append(CheckResult("B2.model_system.defined", "pass"))
@@ -142,9 +157,11 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
                 for c in b2_checks
                 if c.status in {"fail", "partial"} and c.message
             ],
-            suggestions=["Add explicit time window and generalization limits"]
-            if b2_status != "pass"
-            else [],
+            suggestions=(
+                ["Add explicit time window and generalization limits"]
+                if b2_status != "pass"
+                else []
+            ),
         )
 
     # -----------------
@@ -155,7 +172,9 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
             status="fail",
             checks=[CheckResult("B3.present", "fail", "B3 section missing")],
             reasons=["B3 section missing"],
-            suggestions=["Declare a causal mechanism or DAG and address plausible confounders"],
+            suggestions=[
+                "Declare a causal mechanism or DAG and address plausible confounders",
+            ],
         )
     else:
         b3_checks: list[CheckResult] = []
@@ -198,9 +217,11 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
                 for c in b3_checks
                 if c.status in {"fail", "partial"} and c.message
             ],
-            suggestions=["Provide minimal DAG nodes/edges and explicit control strategies"]
-            if b3_status != "pass"
-            else [],
+            suggestions=(
+                ["Provide minimal DAG nodes/edges and explicit control strategies"]
+                if b3_status != "pass"
+                else []
+            ),
         )
 
     # -----------------
@@ -217,7 +238,7 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
             reasons=["B4 section missing"],
             suggestions=[
                 "Declare randomization/blinding/power, endpoints, exclusion criteria, "
-                "and circularity guards"
+                "and circularity guards",
             ],
         )
     else:
@@ -265,12 +286,22 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
             )
         else:
             b4_sabv_status = "fail"
-            b4_checks.append(CheckResult("B4.sabv.declared", "fail", "SABV not addressed"))
+            b4_checks.append(
+                CheckResult(
+                    "B4.sabv.declared",
+                    "fail",
+                    "SABV not addressed",
+                )
+            )
 
         pa = dc.power_analysis
         if pa is None or not pa.declared:
             b4_checks.append(
-                CheckResult("B4.power.declared", "partial", "Power analysis not declared")
+                CheckResult(
+                    "B4.power.declared",
+                    "partial",
+                    "Power analysis not declared",
+                )
             )
         else:
             b4_checks.append(CheckResult("B4.power.declared", "pass"))
@@ -327,7 +358,8 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
 
         if mode == "lite" and b4_status == "fail":
             has_hard_fail = any(
-                c.id == "B4.circularity.no_overlap" and c.status == "fail" for c in b4_checks
+                c.id == "B4.circularity.no_overlap" and c.status == "fail"
+                for c in b4_checks
             )
             if not has_hard_fail:
                 b4_status = "partial"
@@ -340,12 +372,14 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
                 for c in b4_checks
                 if c.status in {"fail", "partial"} and c.message
             ],
-            suggestions=[
-                "Lock endpoints and analysis degrees of freedom; "
-                "separate discovery vs validation explicitly"
-            ]
-            if b4_status != "pass"
-            else [],
+            suggestions=(
+                [
+                    "Lock endpoints and analysis degrees of freedom; "
+                    "separate discovery vs validation explicitly",
+                ]
+                if b4_status != "pass"
+                else []
+            ),
         )
 
     # -----------------
@@ -358,7 +392,7 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
             reasons=["B5 section missing"],
             suggestions=[
                 "Add at least one independent prediction with protocol, "
-                "decision rule, and independent data reference"
+                "decision rule, and independent data reference",
             ],
         )
     else:
@@ -402,7 +436,9 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
 
         if mode == "lite" and b5_status == "fail":
             has_preds_present = any(
-                c.id == "B5.predictions.present" and c.status == "pass" for c in b5_checks
+                c.id == "B5.predictions.present"
+                and c.status == "pass"
+                for c in b5_checks
             )
             if not has_preds_present:
                 b5_status = "partial"
@@ -415,11 +451,14 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
                 for c in b5_checks
                 if c.status in {"fail", "partial"} and c.message
             ],
-            suggestions=[
-                "Make predictions quantitative and bind them to a pre-registered decision rule"
-            ]
-            if b5_status != "pass"
-            else [],
+            suggestions=(
+                [
+                    "Make predictions quantitative and bind them to a pre-registered "
+                    "decision rule",
+                ]
+                if b5_status != "pass"
+                else []
+            ),
         )
 
     # -----------------
