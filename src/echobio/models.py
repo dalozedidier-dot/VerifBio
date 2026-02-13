@@ -5,6 +5,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 
+
 class I18nText(BaseModel):
     language: str = Field(description="BCP-47-ish language tag, e.g. en, fr, es, zh")
     text: str
@@ -155,6 +156,7 @@ class ClaimSpec(BaseModel):
     claim_id: str
     title: str
     claim_type: str
+    language: str = "en"
     domain_tags: list[str] = Field(default_factory=list)
 
     b1: B1
