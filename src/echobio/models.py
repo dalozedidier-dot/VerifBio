@@ -157,8 +157,16 @@ class ClaimSpec(BaseModel):
     claim_id: str
     title: str
     claim_type: str
+
+    # Optional multilingual fields (do not affect core audit logic)
     language: str = "en"
+    claim_text: str | None = None
+    title_i18n: list[I18nText] = Field(default_factory=list)
+    claim_text_i18n: list[I18nText] = Field(default_factory=list)
+    provenance: Provenance | None = None
+
     domain_tags: list[str] = Field(default_factory=list)
+
     b1: B1
     b2: B2 | None = None
     b3: B3 | None = None
