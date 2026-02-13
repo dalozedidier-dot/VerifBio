@@ -41,12 +41,19 @@ def audit_claim(spec: ClaimSpec) -> dict[str, Any]:
     # B1
     b1_checks: list[CheckResult] = []
     if not spec.b1.entities:
-        b1_checks.append(CheckResult("B1.entities.present", "fail", "No entities declared"))
+        b1_checks.append(
+            CheckResult(
+                "B1.entities.present",
+                "fail",
+                "No entities declared",
+            )
+        )
     else:
         b1_checks.append(CheckResult("B1.entities.present", "pass"))
 
     exp = spec.b1.variables.exposure_or_intervention
     out = spec.b1.variables.outcome
+
     if not exp.get("description") or not exp.get("operationalization"):
         b1_checks.append(
             CheckResult(
@@ -60,7 +67,11 @@ def audit_claim(spec: ClaimSpec) -> dict[str, Any]:
 
     if not out.get("description") or not out.get("operationalization"):
         b1_checks.append(
-            CheckResult("B1.outcome.operationalized", "fail", "Outcome lacks description or operationalization")
+            CheckResult(
+                "B1.outcome.operationalized",
+                "fail",
+                "Outcome lacks description or operationalization",
+            )
         )
     else:
         b1_checks.append(CheckResult("B1.outcome.operationalized", "pass"))
@@ -70,7 +81,11 @@ def audit_claim(spec: ClaimSpec) -> dict[str, Any]:
         status=b1_status,
         checks=b1_checks,
         reasons=[c.message for c in b1_checks if c.status == "fail" and c.message],
-        suggestions=["Specify measurement operationalizations for exposure/outcome"] if b1_status != "pass" else [],
+        suggestions=(
+            ["Specify measurement operationalizations for exposure/outcome"]
+            if b1_status != "pass"
+            else []
+        ),
     )
 
     # B2
@@ -79,17 +94,35 @@ def audit_claim(spec: ClaimSpec) -> dict[str, Any]:
             status="fail",
             checks=[CheckResult("B2.present", "fail", "B2 section missing")],
             reasons=["B2 section missing"],
-            suggestions=["Declare biological scale, model validity, and boundaries (time/spatial/generalization limits)"],
+            suggestions=[
+                "Declare biological scale, model validity, and boundaries "
+                "(time/spatial/generalization limits)",
+            ],
         )
     else:
         b2_checks: list[CheckResult] = []
         if spec.b2.biological_scale.lower() in {"unspecified", "", "na"}:
-            b2_checks.append(CheckResult("B2.scale.declared", "fail", "Biological scale unspecified"))
+            b2_checks.append(
+                CheckResult(
+                    "B2.scale.declared",
+                    "fail",
+                    "Biological scale unspecified",
+                )
+            )
         else:
             b2_checks.append(CheckResult("B2.scale.declared", "pass"))
 
-        if not spec.b2.model_system.description or "not specified" in spec.b2.model_system.description.lower():
-            b2_checks.append(CheckResult("B2.model_system.defined", "fail", "Model system not defined"))
+        if (
+            not spec.b2.model_system.description
+            or "not specified" in spec.b2.model_system.description.lower()
+        ):
+            b2_checks.append(
+                CheckResult(
+                    "B2.model_system.defined",
+                    "fail",
+                    "Model system not defined",
+                )
+            )
         else:
             b2_checks.append(CheckResult("B2.model_system.defined", "pass"))
 
@@ -100,13 +133,28 @@ def audit_claim(spec: ClaimSpec) -> dict[str, Any]:
                 bool(spec.b2.boundaries.generalization_limits),
             ]
         )
-        b2_checks.append(CheckResult("B2.boundaries.present", "pass" if has_any_boundary else "partial", "Boundaries are thin or missing"))
+        b2_checks.append(
+            CheckResult(
+                "B2.boundaries.present",
+                "pass" if has_any_boundary else "partial",
+                "Boundaries are thin or missing",
+            )
+        )
+
         b2_status = _status_from_checks(b2_checks)
         levels["B2"] = LevelReport(
             status=b2_status,
             checks=b2_checks,
-            reasons=[c.message for c in b2_checks if c.status in {"fail", "partial"} and c.message],
-            suggestions=["Add explicit time window and generalization limits"] if b2_status != "pass" else [],
+            reasons=[
+                c.message
+                for c in b2_checks
+                if c.status in {"fail", "partial"} and c.message
+            ],
+            suggestions=(
+                ["Add explicit time window and generalization limits"]
+                if b2_status != "pass"
+                else []
+            ),
         )
 
     # B3
@@ -120,20 +168,47 @@ def audit_claim(spec: ClaimSpec) -> dict[str, Any]:
     else:
         b3_checks: list[CheckResult] = []
         if spec.b3.causal_model.type == "none" or not spec.b3.causal_model.statements:
-            b3_checks.append(CheckResult("B3.mechanism.declared", "fail", "No causal mechanism/pathway statements"))
+            b3_checks.append(
+                CheckResult(
+                    "B3.mechanism.declared",
+                    "fail",
+                    "No causal mechanism/pathway statements",
+                )
+            )
         else:
             b3_checks.append(CheckResult("B3.mechanism.declared", "pass"))
 
         confs = spec.b3.confounders.listed
-        b3_checks.append(CheckResult("B3.confounders.listed", "pass" if confs else "partial", "No confounders listed"))
+        b3_checks.append(
+            CheckResult(
+                "B3.confounders.listed",
+                "pass" if confs else "partial",
+                "No confounders listed",
+            )
+        )
         has_controls = any(bool(c.control_strategy) for c in confs)
-        b3_checks.append(CheckResult("B3.confounders.controlled", "pass" if has_controls else "partial", "Confounders lack control strategies"))
+        b3_checks.append(
+            CheckResult(
+                "B3.confounders.controlled",
+                "pass" if has_controls else "partial",
+                "Confounders lack control strategies",
+            )
+        )
+
         b3_status = _status_from_checks(b3_checks)
         levels["B3"] = LevelReport(
             status=b3_status,
             checks=b3_checks,
-            reasons=[c.message for c in b3_checks if c.status in {"fail", "partial"} and c.message],
-            suggestions=["Provide minimal DAG nodes/edges and explicit control strategies"] if b3_status != "pass" else [],
+            reasons=[
+                c.message
+                for c in b3_checks
+                if c.status in {"fail", "partial"} and c.message
+            ],
+            suggestions=(
+                ["Provide minimal DAG nodes/edges and explicit control strategies"]
+                if b3_status != "pass"
+                else []
+            ),
         )
 
     # B4
@@ -142,44 +217,100 @@ def audit_claim(spec: ClaimSpec) -> dict[str, Any]:
             status="fail",
             checks=[CheckResult("B4.present", "fail", "B4 section missing")],
             reasons=["B4 section missing"],
-            suggestions=["Declare randomization/blinding/power, endpoints, exclusion criteria, and circularity guards"],
+            suggestions=[
+                "Declare randomization/blinding/power, endpoints, "
+                "exclusion criteria, and circularity guards",
+            ],
         )
     else:
         b4_checks: list[CheckResult] = []
         dc = spec.b4.design_controls
-        b4_checks.append(CheckResult("B4.randomization.declared", "pass" if dc.randomization else "partial", "Randomization not declared"))
-        b4_checks.append(CheckResult("B4.blinding.declared", "pass" if dc.blinding else "partial", "Blinding not declared"))
+        b4_checks.append(
+            CheckResult(
+                "B4.randomization.declared",
+                "pass" if dc.randomization else "partial",
+                "Randomization not declared",
+            )
+        )
+        b4_checks.append(
+            CheckResult(
+                "B4.blinding.declared",
+                "pass" if dc.blinding else "partial",
+                "Blinding not declared",
+            )
+        )
 
         pa = dc.power_analysis
         if pa is None or not pa.declared:
-            b4_checks.append(CheckResult("B4.power.declared", "partial", "Power analysis not declared"))
+            b4_checks.append(
+                CheckResult(
+                    "B4.power.declared",
+                    "partial",
+                    "Power analysis not declared",
+                )
+            )
         else:
             b4_checks.append(CheckResult("B4.power.declared", "pass"))
 
         ap = dc.analysis_plan
         if ap is None or not ap.primary_endpoint:
-            b4_checks.append(CheckResult("B4.primary_endpoint.locked", "partial", "Primary endpoint not locked"))
+            b4_checks.append(
+                CheckResult(
+                    "B4.primary_endpoint.locked",
+                    "partial",
+                    "Primary endpoint not locked",
+                )
+            )
         else:
             b4_checks.append(CheckResult("B4.primary_endpoint.locked", "pass"))
 
         rrids = spec.b4.resources.rrids
         if rrids:
             bad = [r.rrid for r in rrids if not _RRID_RE.match(r.rrid)]
-            b4_checks.append(CheckResult("B4.rrids.valid", "fail" if bad else "pass", f"Invalid RRID format: {bad}" if bad else None))
+            b4_checks.append(
+                CheckResult(
+                    "B4.rrids.valid",
+                    "fail" if bad else "pass",
+                    f"Invalid RRID format: {bad}" if bad else None,
+                )
+            )
         else:
-            b4_checks.append(CheckResult("B4.rrids.present", "partial", "No RRIDs declared (may be ok depending on claim)"))
+            b4_checks.append(
+                CheckResult(
+                    "B4.rrids.present",
+                    "partial",
+                    "No RRIDs declared (may be ok depending on claim)",
+                )
+            )
 
         disc = set(spec.b4.circularity_guards.discovery_data)
         val = set(spec.b4.circularity_guards.validation_data)
         overlap = sorted(disc.intersection(val))
-        b4_checks.append(CheckResult("B4.circularity.no_overlap", "fail" if overlap else "pass", f"Discovery/validation overlap: {overlap}" if overlap else None))
+        b4_checks.append(
+            CheckResult(
+                "B4.circularity.no_overlap",
+                "fail" if overlap else "pass",
+                f"Discovery/validation overlap: {overlap}" if overlap else None,
+            )
+        )
 
         b4_status = _status_from_checks(b4_checks)
         levels["B4"] = LevelReport(
             status=b4_status,
             checks=b4_checks,
-            reasons=[c.message for c in b4_checks if c.status in {"fail", "partial"} and c.message],
-            suggestions=["Lock endpoints and analysis degrees of freedom; separate discovery vs validation explicitly"] if b4_status != "pass" else [],
+            reasons=[
+                c.message
+                for c in b4_checks
+                if c.status in {"fail", "partial"} and c.message
+            ],
+            suggestions=(
+                [
+                    "Lock endpoints and analysis degrees of freedom; "
+                    "separate discovery vs validation explicitly",
+                ]
+                if b4_status != "pass"
+                else []
+            ),
         )
 
     # B5
@@ -188,37 +319,75 @@ def audit_claim(spec: ClaimSpec) -> dict[str, Any]:
             status="fail",
             checks=[CheckResult("B5.present", "fail", "B5 section missing")],
             reasons=["B5 section missing"],
-            suggestions=["Add at least one independent prediction with protocol, decision rule, and independent data reference"],
+            suggestions=[
+                "Add at least one independent prediction with protocol, "
+                "decision rule, and independent data reference",
+            ],
         )
     else:
         b5_checks: list[CheckResult] = []
         preds = spec.b5.independent_predictions
+
         if not preds:
-            b5_checks.append(CheckResult("B5.predictions.present", "fail", "No independent predictions provided"))
+            b5_checks.append(
+                CheckResult(
+                    "B5.predictions.present",
+                    "fail",
+                    "No independent predictions provided",
+                )
+            )
         else:
             b5_checks.append(CheckResult("B5.predictions.present", "pass"))
 
         any_ind = any(p.is_independent for p in preds)
-        b5_checks.append(CheckResult("B5.is_independent.true", "pass" if any_ind else "fail", "No prediction marked is_independent: true"))
+        b5_checks.append(
+            CheckResult(
+                "B5.is_independent.true",
+                "pass" if any_ind else "fail",
+                "No prediction marked is_independent: true",
+            )
+        )
 
-        thin = [p.prediction_id for p in preds if not p.test_protocol or "decision_rule" not in p.test_protocol]
-        b5_checks.append(CheckResult("B5.protocol.declared", "partial" if thin else "pass", f"Thin protocols (missing decision_rule): {thin}" if thin else None))
+        thin = [
+            p.prediction_id
+            for p in preds
+            if (not p.test_protocol) or ("decision_rule" not in p.test_protocol)
+        ]
+        b5_checks.append(
+            CheckResult(
+                "B5.protocol.declared",
+                "partial" if thin else "pass",
+                f"Thin protocols (missing decision_rule): {thin}" if thin else None,
+            )
+        )
 
         b5_status = _status_from_checks(b5_checks)
         levels["B5"] = LevelReport(
             status=b5_status,
             checks=b5_checks,
-            reasons=[c.message for c in b5_checks if c.status in {"fail", "partial"} and c.message],
-            suggestions=["Make predictions quantitative and bind them to a pre-registered decision rule"] if b5_status != "pass" else [],
+            reasons=[
+                c.message
+                for c in b5_checks
+                if c.status in {"fail", "partial"} and c.message
+            ],
+            suggestions=(
+                ["Make predictions quantitative and bind them to a pre-registered decision rule"]
+                if b5_status != "pass"
+                else []
+            ),
         )
 
     # Overall logic
-    blocking = [lvl for lvl, rep in levels.items() if rep.status == "fail" and lvl in {"B1", "B3", "B5"}]
+    blocking = [
+        lvl
+        for lvl, rep in levels.items()
+        if rep.status == "fail" and lvl in {"B1", "B3", "B5"}
+    ]
     score_map = {"pass": 1.0, "partial": 0.5, "fail": 0.0}
     raw = sum(score_map[levels[k].status] for k in ["B1", "B2", "B3", "B4", "B5"])
     spec_score = int(round(raw / 5.0 * 100))
 
-    risk_flags = []
+    risk_flags: list[dict[str, str]] = []
     if levels["B4"].status != "pass":
         risk_flags.append({"id": "p_hacking_degrees_of_freedom", "level": "medium"})
     if levels["B3"].status != "pass":
@@ -238,7 +407,9 @@ def audit_claim(spec: ClaimSpec) -> dict[str, Any]:
         "levels": {
             k: {
                 "status": v.status,
-                "checks": [{"id": c.id, "status": c.status, "message": c.message} for c in v.checks],
+                "checks": [
+                    {"id": c.id, "status": c.status, "message": c.message} for c in v.checks
+                ],
                 "reasons": v.reasons,
                 "suggestions": v.suggestions,
             }
