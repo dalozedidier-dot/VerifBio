@@ -34,7 +34,7 @@ def suggest_predictions(spec: ClaimSpec) -> dict[str, Any]:
     return {
         "suggestions": suggestions,
         "notes": [
-                "Heuristic suggestions; refine to be quantitative.",
+            "Heuristic suggestions; refine to be quantitative.",
         ],
     }
 
