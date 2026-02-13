@@ -100,13 +100,7 @@ b4:
         correction: "Benjamini-Hochberg"
       outlier_handling: "pre-specified: exclude only measurement errors with documented cause"
   resources:
-    rrids:
-      - kind: "antibody"
-        rrid: "RRID:AB_XXXXXXX"
-        description: "RAD51 antibody (placeholder)"
-      - kind: "mouse_strain"
-        rrid: "RRID:IMSR_JAX_000664"
-        description: "C57BL/6J (placeholder format)"
+    rrids: []
   circularity_guards:
     discovery_data:
       - "pilot_dataset_2024_ko_response"
@@ -120,7 +114,6 @@ b5:
       is_independent: true
       statement: "In an independent cohort, BRCA1 KO tumors will show >= 25% lower week-6 volume under PARP inhibitor vs controls"
       test_protocol:
-        model: "same KO model, new cohort not used in discovery"
         measurement: "tumor volume weekly; primary endpoint week 6"
         decision_rule: "success if mean reduction >= 25% with pre-registered analysis"
       data_reference:
