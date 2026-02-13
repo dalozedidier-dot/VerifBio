@@ -3,7 +3,7 @@ name: CI
 on:
   workflow_dispatch:
   push:
-    branches: ["main"]
+    branches: ["main", "master"]
   pull_request:
 
 concurrency:
@@ -42,3 +42,15 @@ jobs:
       - name: Pytest
         run: |
           pytest -q
+
+      - name: EchoBio CLI smoke
+        run: |
+          mkdir -p _ci_out
+          echobio audit examples/brca1_parp.yaml --out _ci_out/echobio_report.json
+
+      - name: Upload EchoBio report
+        uses: actions/upload-artifact@v4
+        with:
+          name: echobio_report_py${{ matrix.python-version }}
+          path: _ci_out/echobio_report.json
+          if-no-files-found: error
