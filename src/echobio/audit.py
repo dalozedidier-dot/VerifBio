@@ -369,7 +369,8 @@ def audit_claim(spec: ClaimSpec) -> dict[str, Any]:
                 if c.status in {"fail", "partial"} and c.message
             ],
             suggestions=[
-                "Make predictions quantitative and bind them to a pre-registered decision rule"
+                "Make predictions quantitative and bind them to a pre-registered "
+                "decision rule"
             ]
             if b5_status != "pass"
             else [],
