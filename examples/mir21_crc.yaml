@@ -1,0 +1,96 @@
+schema_version: "0.1"
+claim_id: "ECHOBIO-EX-0002"
+title: "miR-21 promotes colorectal cancer progression via PDCD4 inhibition and PI3K/AKT activation"
+claim_type: "causal_mechanistic"
+language: "en"
+claim_text: "miR-21 inhibits PDCD4 leading to increased PI3K/AKT signaling and tumor progression."
+domain_tags: ["cancer", "mirna", "signaling"]
+
+b1:
+  entities:
+    - kind: "mirna"
+      name: "miR-21"
+    - kind: "gene"
+      name: "PDCD4"
+    - kind: "pathway"
+      name: "PI3K_AKT"
+  context:
+    setting: "in_vivo"
+    species:
+      name: "Mus musculus"
+      tax_id: 10090
+    tissue: "colon"
+  variables:
+    exposure_or_intervention:
+      description: "miR-21 knockdown"
+      operationalization: "antisense inhibitor delivered to tumor cells"
+    outcome:
+      description: "tumor growth"
+      operationalization: "tumor volume weekly for 4 weeks"
+    mediators:
+      - description: "PDCD4 protein level"
+        operationalization: "western blot"
+    covariates_declared: ["sex", "batch"]
+
+b2:
+  biological_scale: "tissue"
+  model_system:
+    description: "human CRC cell lines + NSG xenograft"
+    validity_notes: "xenograft lacks full immune context"
+  boundaries:
+    time_window: "4 weeks post implantation"
+    spatial_scope: "primary tumor only"
+    generalization_limits: ["Not claiming effects in immune-competent hosts"]
+
+b3:
+  causal_model:
+    type: "pathway"
+    statements:
+      - "miR-21 -> PDCD4"
+      - "PDCD4 -> PI3K_AKT"
+      - "PI3K_AKT -> tumor_growth"
+  dag:
+    nodes: ["miR-21", "PDCD4", "PI3K_AKT", "tumor_growth", "sex", "batch"]
+    edges:
+      - ["miR-21", "PDCD4"]
+      - ["PDCD4", "PI3K_AKT"]
+      - ["PI3K_AKT", "tumor_growth"]
+      - ["sex", "tumor_growth"]
+      - ["batch", "tumor_growth"]
+  confounders:
+    listed:
+      - name: "sex"
+        control_strategy: "sex-balanced randomization; report sex-stratified outcomes"
+
+b4:
+  design_controls:
+    randomization: "randomize mice to treatment within sex strata"
+    blinding: "blinded tumor measurement"
+    sabv: "partial"
+    power_analysis:
+      declared: false
+    exclusion_criteria: ["baseline tumor outside range"]
+    analysis_plan:
+      primary_endpoint: "tumor volume at week 4"
+      secondary_endpoints: ["PDCD4 protein level"]
+      multiple_testing:
+        correction: "BH"
+      outlier_handling: "pre-specified measurement error only"
+  resources:
+    rrids: []
+  circularity_guards:
+    discovery_data: ["dataset_discovery_crc_2025"]
+    validation_data: ["dataset_validation_crc_2026"]
+    notes: "No overlap"
+
+b5:
+  independent_predictions:
+    - prediction_id: "P1"
+      is_independent: true
+      statement: "In an independent CRC line not used for discovery, miR-21 knockdown will reduce tumor growth by at least 20%."
+      test_protocol:
+        measurement: "tumor volume weekly; endpoint week 4"
+        decision_rule: "success if mean reduction >= 20% under locked analysis"
+      data_reference:
+        dataset_id: "dataset_validation_crc_2026"
+      falsifiers: ["No reduction under blinded measurement"]

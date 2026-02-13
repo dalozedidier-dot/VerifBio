@@ -16,6 +16,8 @@ test:
 	pytest -q
 
 audit:
-	echobio audit examples/brca1_parp.yaml
+	mkdir -p _ci_out
+	echobio audit examples/brca1_parp.yaml --out _ci_out/echobio_report.json
+	echobio export _ci_out/echobio_report.json --format markdown --out _ci_out/echobio_report.md
 
 ci: check test audit

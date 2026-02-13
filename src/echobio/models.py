@@ -5,6 +5,17 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 
+
+class I18nText(BaseModel):
+    language: str = Field(description="BCP-47-ish language tag, e.g. en, fr, es, zh")
+    text: str
+
+
+class Provenance(BaseModel):
+    source: Literal["user", "inferred", "unknown"] = "user"
+    notes: str | None = None
+
+
 class EntityIds(BaseModel):
     hgnc: str | None = None
     ensembl: str | None = None
@@ -98,6 +109,7 @@ class AnalysisPlan(BaseModel):
 class DesignControls(BaseModel):
     randomization: str | None = None
     blinding: str | None = None
+    sabv: Literal["yes", "no", "partial"] | None = None
     power_analysis: PowerAnalysis | None = None
     exclusion_criteria: list[str] = Field(default_factory=list)
     analysis_plan: AnalysisPlan | None = None

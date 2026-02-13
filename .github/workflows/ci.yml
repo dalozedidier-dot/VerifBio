@@ -47,10 +47,13 @@ jobs:
         run: |
           mkdir -p _ci_out
           echobio audit examples/brca1_parp.yaml --out _ci_out/echobio_report.json
+          echobio export _ci_out/echobio_report.json --format markdown --out _ci_out/echobio_report.md
 
       - name: Upload EchoBio report
         uses: actions/upload-artifact@v4
         with:
           name: echobio_report_py${{ matrix.python-version }}
-          path: _ci_out/echobio_report.json
+          path: |
+            _ci_out/echobio_report.json
+            _ci_out/echobio_report.md
           if-no-files-found: error
