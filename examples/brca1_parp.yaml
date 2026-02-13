@@ -1,0 +1,129 @@
+schema_version: "0.1"
+claim_id: "ECHOBIO-EX-0001"
+title: "BRCA1 loss-of-function causes HR repair deficiency leading to PARP inhibitor sensitivity"
+claim_type: "causal_mechanistic"
+domain_tags: ["cancer", "dna_repair", "therapy_response"]
+
+b1:
+  entities:
+    - kind: "gene"
+      name: "BRCA1"
+      ids:
+        hgnc: "HGNC:1100"
+        ensembl: "ENSG00000012048"
+    - kind: "drug"
+      name: "PARP_inhibitor"
+  context:
+    setting: "in_vivo"
+    species:
+      name: "Mus musculus"
+      tax_id: 10090
+    tissue: "mammary"
+  variables:
+    exposure_or_intervention:
+      description: "BRCA1 loss-of-function"
+      operationalization: "conditional knockout in mammary epithelium"
+    outcome:
+      description: "tumor burden reduction under PARP inhibitor"
+      operationalization: "tumor volume by caliper, weekly, 6 weeks"
+    mediators:
+      - description: "homologous recombination repair capacity"
+        operationalization: "RAD51 foci formation assay"
+    covariates_declared:
+      - "sex"
+      - "age"
+      - "genetic_background"
+
+b2:
+  biological_scale: "organism"
+  model_system:
+    description: "C57BL/6 background conditional KO model"
+    validity_notes: "Limitation: strain-specific immune response"
+  boundaries:
+    time_window: "treatment starts at tumor size 100-150 mm^3; follow-up 6 weeks"
+    spatial_scope: "primary mammary tumors only"
+    generalization_limits:
+      - "Not claiming direct clinical efficacy in humans"
+
+b3:
+  causal_model:
+    type: "pathway"
+    statements:
+      - "BRCA1 LOF decreases HR repair capacity"
+      - "HR deficiency increases reliance on PARP-mediated repair"
+      - "PARP inhibition induces synthetic lethality in HR-deficient cells"
+  dag:
+    nodes:
+      - "BRCA1_status"
+      - "HR_capacity"
+      - "PARP_inhibitor"
+      - "tumor_burden"
+      - "sex"
+      - "age"
+      - "genetic_background"
+    edges:
+      - ["BRCA1_status", "HR_capacity"]
+      - ["HR_capacity", "tumor_burden"]
+      - ["PARP_inhibitor", "tumor_burden"]
+      - ["sex", "tumor_burden"]
+      - ["age", "tumor_burden"]
+      - ["genetic_background", "tumor_burden"]
+  confounders:
+    listed:
+      - name: "genetic_background"
+        control_strategy: "use littermate controls; single background"
+      - name: "sex"
+        control_strategy: "sex-balanced randomization; sex-stratified analysis"
+      - name: "age"
+        control_strategy: "age-matched enrollment"
+
+b4:
+  design_controls:
+    randomization: "block randomization by litter and sex"
+    blinding: "tumor measurements blinded to genotype and treatment"
+    power_analysis:
+      declared: true
+      endpoint: "tumor volume at week 6"
+      effect_size_assumption: "30% reduction"
+      alpha: 0.05
+      power: 0.8
+      planned_n_per_group: 12
+    exclusion_criteria:
+      - "baseline tumor outside 100-150 mm^3"
+      - "unexpected illness unrelated to tumor"
+    analysis_plan:
+      primary_endpoint: "tumor volume at week 6"
+      secondary_endpoints:
+        - "time to progression"
+        - "RAD51 foci count"
+      multiple_testing:
+        correction: "Benjamini-Hochberg"
+      outlier_handling: "pre-specified: exclude only measurement errors with documented cause"
+  resources:
+    rrids:
+      - kind: "antibody"
+        rrid: "RRID:AB_XXXXXXX"
+        description: "RAD51 antibody (placeholder)"
+      - kind: "mouse_strain"
+        rrid: "RRID:IMSR_JAX_000664"
+        description: "C57BL/6J (placeholder format)"
+  circularity_guards:
+    discovery_data:
+      - "pilot_dataset_2024_ko_response"
+    validation_data:
+      - "independent_cohort_2025_ko_response"
+    notes: "Prediction tests on validation_data only"
+
+b5:
+  independent_predictions:
+    - prediction_id: "P1"
+      is_independent: true
+      statement: "In an independent cohort, BRCA1 KO tumors will show >= 25% lower week-6 volume under PARP inhibitor vs controls"
+      test_protocol:
+        model: "same KO model, new cohort not used in discovery"
+        measurement: "tumor volume weekly; primary endpoint week 6"
+        decision_rule: "success if mean reduction >= 25% with pre-registered analysis"
+      data_reference:
+        dataset_id: "independent_cohort_2025_ko_response"
+      falsifiers:
+        - "No difference or opposite direction under blinded measurement"
