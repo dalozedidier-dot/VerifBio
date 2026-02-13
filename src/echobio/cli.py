@@ -27,7 +27,10 @@ def main() -> None:
     )
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    p_audit = sub.add_parser("audit", help="Audit a claim YAML spec and output a JSON report.")
+    p_audit = sub.add_parser(
+        "audit",
+        help="Audit a claim YAML spec and output a JSON report.",
+    )
     p_audit.add_argument("input", help="Path to claim YAML (recommended).")
     p_audit.add_argument("--out", help="Write report JSON to this path.")
     p_audit.set_defaults(func=_cmd_audit)

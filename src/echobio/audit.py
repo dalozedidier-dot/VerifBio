@@ -41,7 +41,13 @@ def audit_claim(spec: ClaimSpec) -> dict[str, Any]:
     # B1
     b1_checks: list[CheckResult] = []
     if not spec.b1.entities:
-        b1_checks.append(CheckResult("B1.entities.present", "fail", "No entities declared"))
+        b1_checks.append(
+            CheckResult(
+                "B1.entities.present",
+                "fail",
+                "No entities declared",
+            )
+        )
     else:
         b1_checks.append(CheckResult("B1.entities.present", "pass"))
 
@@ -94,7 +100,13 @@ def audit_claim(spec: ClaimSpec) -> dict[str, Any]:
     else:
         b2_checks: list[CheckResult] = []
         if spec.b2.biological_scale.lower() in {"unspecified", "", "na"}:
-            b2_checks.append(CheckResult("B2.scale.declared", "fail", "Biological scale unspecified"))
+            b2_checks.append(
+                CheckResult(
+                    "B2.scale.declared",
+                    "fail",
+                    "Biological scale unspecified",
+                )
+            )
         else:
             b2_checks.append(CheckResult("B2.scale.declared", "pass"))
 
@@ -102,7 +114,13 @@ def audit_claim(spec: ClaimSpec) -> dict[str, Any]:
             not spec.b2.model_system.description
             or "not specified" in spec.b2.model_system.description.lower()
         ):
-            b2_checks.append(CheckResult("B2.model_system.defined", "fail", "Model system not defined"))
+            b2_checks.append(
+                CheckResult(
+                    "B2.model_system.defined",
+                    "fail",
+                    "Model system not defined",
+                )
+            )
         else:
             b2_checks.append(CheckResult("B2.model_system.defined", "pass"))
 
@@ -141,12 +159,20 @@ def audit_claim(spec: ClaimSpec) -> dict[str, Any]:
             status="fail",
             checks=[CheckResult("B3.present", "fail", "B3 section missing")],
             reasons=["B3 section missing"],
-            suggestions=["Declare a causal mechanism or DAG and address plausible confounders"],
+            suggestions=[
+                "Declare a causal mechanism or DAG and address plausible confounders"
+            ],
         )
     else:
         b3_checks: list[CheckResult] = []
         if spec.b3.causal_model.type == "none" or not spec.b3.causal_model.statements:
-            b3_checks.append(CheckResult("B3.mechanism.declared", "fail", "No causal mechanism/pathway statements"))
+            b3_checks.append(
+                CheckResult(
+                    "B3.mechanism.declared",
+                    "fail",
+                    "No causal mechanism/pathway statements",
+                )
+            )
         else:
             b3_checks.append(CheckResult("B3.mechanism.declared", "pass"))
 
@@ -177,7 +203,9 @@ def audit_claim(spec: ClaimSpec) -> dict[str, Any]:
                 for c in b3_checks
                 if c.status in {"fail", "partial"} and c.message
             ],
-            suggestions=["Provide minimal DAG nodes/edges and explicit control strategies"]
+            suggestions=[
+                "Provide minimal DAG nodes/edges and explicit control strategies"
+            ]
             if b3_status != "pass"
             else [],
         )
@@ -214,7 +242,13 @@ def audit_claim(spec: ClaimSpec) -> dict[str, Any]:
 
         pa = dc.power_analysis
         if pa is None or not pa.declared:
-            b4_checks.append(CheckResult("B4.power.declared", "partial", "Power analysis not declared"))
+            b4_checks.append(
+                CheckResult(
+                    "B4.power.declared",
+                    "partial",
+                    "Power analysis not declared",
+                )
+            )
         else:
             b4_checks.append(CheckResult("B4.power.declared", "pass"))
 
@@ -334,14 +368,17 @@ def audit_claim(spec: ClaimSpec) -> dict[str, Any]:
                 for c in b5_checks
                 if c.status in {"fail", "partial"} and c.message
             ],
-            suggestions=["Make predictions quantitative and bind them to a pre-registered decision rule"]
+            suggestions=[
+                "Make predictions quantitative and bind them to a pre-registered decision rule"
+            ]
             if b5_status != "pass"
             else [],
         )
 
     # Overall logic
     blocking = [
-        lvl for lvl, rep in levels.items()
+        lvl
+        for lvl, rep in levels.items()
         if rep.status == "fail" and lvl in {"B1", "B3", "B5"}
     ]
 
