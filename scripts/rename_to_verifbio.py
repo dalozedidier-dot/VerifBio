@@ -33,13 +33,13 @@ SKIP_DIRS = {
 
 def iter_text_files(root: Path) -> list[Path]:
     files: list[Path] = []
-    for p in root.rglob("*"):
-        if p.is_dir():
+    for path in root.rglob("*"):
+        if path.is_dir():
             continue
-        if any(part in SKIP_DIRS for part in p.parts):
+        if any(part in SKIP_DIRS for part in path.parts):
             continue
-        if p.suffix.lower() in TEXT_EXTS or p.name == "Makefile":
-            files.append(p)
+        if path.suffix.lower() in TEXT_EXTS or path.name == "Makefile":
+            files.append(path)
     return files
 
 
@@ -60,9 +60,15 @@ def replace_in_file(path: Path, repls: list[tuple[re.Pattern[str], str]]) -> boo
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Rename echobio -> verifbio across a repo.")
-    ap.add_argument("--root", default=".", help="Repo root")
-    args = ap.parse_args()
+    parser = argparse.ArgumentParser(
+        description="Rename echobio -> verifbio across a repo (textual references)."
+    )
+    parser.add_argument(
+        "--root",
+        default=".",
+        help="Repo root directory (default: current directory).",
+    )
+    args = parser.parse_args()
 
     repo = Path(args.root).resolve()
 
