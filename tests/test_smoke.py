@@ -12,7 +12,7 @@ from echobio.scoring import weighted_score
 def test_audit_smoke() -> None:
     spec = load_claim(Path("examples") / "brca1_parp.yaml")
     report = audit_claim(spec, mode="strict")
-    assert report["tool"] == "echobio"
+    assert report["tool"] == "verifbio"
     assert report["overall"]["spec_score_0_100"] >= 0
     assert report["overall"]["weighted_score_0_100"] >= 0
     json.dumps(report)
