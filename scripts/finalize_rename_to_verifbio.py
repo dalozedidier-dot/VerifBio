@@ -2,11 +2,9 @@
 from __future__ import annotations
 
 import argparse
-import os
 import re
 import subprocess
 from pathlib import Path
-
 
 TEXT_EXTS = {
     ".cfg",
@@ -33,6 +31,10 @@ SKIP_DIRS = {
     "venv",
 }
 
+PAT_ECHOBIO = re.compile(r"\bechobio\b")
+PAT_ECHOBIO_CAP = re.compile(r"\bEchobio\b")
+PAT_ECHOBIO_TITLE = re.compile(r"\bEchoBio\b")
+
 
 def _run(cmd: list[str]) -> int:
     try:
@@ -41,22 +43,23 @@ def _run(cmd: list[str]) -> int:
         return 127
 
 
-def _git_mv(src: Path, dst: Path) -> None:
+def _git_mv(src: Path, dst: Path) -> bool:
     if _run(["git", "mv", str(src), str(dst)]) == 0:
-        return
+        return True
     dst.parent.mkdir(parents=True, exist_ok=True)
     src.rename(dst)
+    return True
 
 
 def iter_text_files(root: Path) -> list[Path]:
     files: list[Path] = []
-    for p in root.rglob("*"):
-        if p.is_dir():
+    for path in root.rglob("*"):
+        if path.is_dir():
             continue
-        if any(part in SKIP_DIRS for part in p.parts):
+        if any(part in SKIP_DIRS for part in path.parts):
             continue
-        if p.suffix.lower() in TEXT_EXTS or p.name == "Makefile":
-            files.append(p)
+        if path.suffix.lower() in TEXT_EXTS or path.name == "Makefile":
+            files.append(path)
     return files
 
 
@@ -71,19 +74,11 @@ def write_text(path: Path, data: str) -> None:
     path.write_text(data, encoding="utf-8", newline="\n")
 
 
-def replace_in_file(path: Path, repls: list[tuple[re.Pattern[str], str]]) -> bool:
-    data = read_text(path)
-    if data is None:
-        return False
-
-    new = data
-    for pat, rep in repls:
-        new = pat.sub(rep, new)
-
-    if new != data:
-        write_text(path, new)
-        return True
-    return False
+def replace_in_text(data: str) -> str:
+    data = PAT_ECHOBIO.sub("verifbio", data)
+    data = PAT_ECHOBIO_CAP.sub("Verifbio", data)
+    data = PAT_ECHOBIO_TITLE.sub("VerifBio", data)
+    return data
 
 
 def patch_pyproject(pyproject: Path) -> bool:
@@ -93,25 +88,28 @@ def patch_pyproject(pyproject: Path) -> bool:
 
     new = data
 
-    # Common patterns: PEP 621
-    new = re.sub(r'(?m)^\s*name\s*=\s*"echobio"\s*$', 'name = "verifbio"', new)
+    # PEP 621 / Poetry: project name
+    new = re.sub(
+        r'(?m)^\s*name\s*=\s*"echobio"\s*$',
+        'name = "verifbio"',
+        new,
+    )
 
-    # Poetry style
-    new = re.sub(r'(?m)^\s*name\s*=\s*"echobio"\s*$', 'name = "verifbio"', new)
-
-    # Console scripts (best effort)
+    # Console scripts: echobio = "echobio...." -> verifbio = "verifbio...."
     new = re.sub(
         r'(?m)^\s*echobio\s*=\s*"echobio\.',
         'verifbio = "verifbio.',
         new,
     )
 
-    # If packages are pinned explicitly
+    # Explicit packages list: packages = ["echobio"]
     new = re.sub(
         r'(?m)^\s*packages\s*=\s*\[\s*"echobio"\s*\]\s*$',
         'packages = ["verifbio"]',
         new,
     )
+
+    new = replace_in_text(new)
 
     if new != data:
         write_text(pyproject, new)
@@ -119,35 +117,47 @@ def patch_pyproject(pyproject: Path) -> bool:
     return False
 
 
+def replace_in_file(path: Path) -> bool:
+    data = read_text(path)
+    if data is None:
+        return False
+
+    if path.name == "pyproject.toml":
+        return patch_pyproject(path)
+
+    new = replace_in_text(data)
+    if new != data:
+        write_text(path, new)
+        return True
+    return False
+
+
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Finalize rename echobio -> verifbio.")
-    ap.add_argument("--root", default=".", help="Repo root (default: current dir)")
-    args = ap.parse_args()
+    parser = argparse.ArgumentParser(
+        description="Finalize rename echobio -> verifbio (package dir + refs)."
+    )
+    parser.add_argument("--root", default=".", help="Repo root (default: .)")
+    args = parser.parse_args()
 
     repo = Path(args.root).resolve()
 
     moved = False
-    if (repo / "src" / "echobio").is_dir() and not (repo / "src" / "verifbio").is_dir():
-        _git_mv(repo / "src" / "echobio", repo / "src" / "verifbio")
+
+    src_old = repo / "src" / "echobio"
+    src_new = repo / "src" / "verifbio"
+    if src_old.is_dir() and not src_new.is_dir():
+        _git_mv(src_old, src_new)
         moved = True
 
-    if (repo / "echobio").is_dir() and not (repo / "verifbio").is_dir():
-        _git_mv(repo / "echobio", repo / "verifbio")
+    top_old = repo / "echobio"
+    top_new = repo / "verifbio"
+    if top_old.is_dir() and not top_new.is_dir():
+        _git_mv(top_old, top_new)
         moved = True
-
-    repls: list[tuple[re.Pattern[str], str]] = [
-        (re.compile(r"\bechobio\b"), "verifbio"),
-        (re.compile(r"\bEchobio\b"), "Verifbio"),
-        (re.compile(r"\bEchoBio\b"), "VerifBio"),
-    ]
 
     changed = 0
     for f in iter_text_files(repo):
-        if f.name == "pyproject.toml":
-            if patch_pyproject(f):
-                changed += 1
-            continue
-        if replace_in_file(f, repls):
+        if replace_in_file(f):
             changed += 1
 
     print("Finalize rename summary")
@@ -155,9 +165,9 @@ def main() -> int:
     print(f"- edited text files: {changed}")
     print("")
     print("Next")
-    print("1) Review changes: git diff")
-    print('2) Run: python -c "import verifbio; print(verifbio.__file__)"')
-    print("3) Commit and push")
+    print("1) Review: git diff")
+    print('2) Test:  python -c "import verifbio; print(verifbio.__file__)"')
+    print("3) Commit + push")
     return 0
 
 
