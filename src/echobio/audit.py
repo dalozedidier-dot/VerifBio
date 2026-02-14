@@ -46,11 +46,7 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
 
     if not spec.b1.entities:
         b1_checks.append(
-            CheckResult(
-                "B1.entities.present",
-                "fail",
-                "No entities declared",
-            )
+            CheckResult("B1.entities.present", "fail", "No entities declared")
         )
     else:
         b1_checks.append(CheckResult("B1.entities.present", "pass"))
@@ -102,7 +98,7 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
             reasons=["B2 section missing"],
             suggestions=[
                 "Declare biological scale, model validity, and boundaries "
-                "(time/spatial/generalization limits)",
+                "(time/spatial/generalization limits)"
             ],
         )
     else:
@@ -110,11 +106,7 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
 
         if spec.b2.biological_scale.lower() in {"unspecified", "", "na"}:
             b2_checks.append(
-                CheckResult(
-                    "B2.scale.declared",
-                    "fail",
-                    "Biological scale unspecified",
-                )
+                CheckResult("B2.scale.declared", "fail", "Biological scale unspecified")
             )
         else:
             b2_checks.append(CheckResult("B2.scale.declared", "pass"))
@@ -125,9 +117,7 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
         ):
             b2_checks.append(
                 CheckResult(
-                    "B2.model_system.defined",
-                    "fail",
-                    "Model system not defined",
+                    "B2.model_system.defined", "fail", "Model system not defined"
                 )
             )
         else:
@@ -173,7 +163,7 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
             checks=[CheckResult("B3.present", "fail", "B3 section missing")],
             reasons=["B3 section missing"],
             suggestions=[
-                "Declare a causal mechanism or DAG and address plausible confounders",
+                "Declare a causal mechanism or DAG and address plausible confounders"
             ],
         )
     else:
@@ -238,7 +228,7 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
             reasons=["B4 section missing"],
             suggestions=[
                 "Declare randomization/blinding/power, endpoints, exclusion criteria, "
-                "and circularity guards",
+                "and circularity guards"
             ],
         )
     else:
@@ -287,20 +277,14 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
         else:
             b4_sabv_status = "fail"
             b4_checks.append(
-                CheckResult(
-                    "B4.sabv.declared",
-                    "fail",
-                    "SABV not addressed",
-                )
+                CheckResult("B4.sabv.declared", "fail", "SABV not addressed")
             )
 
         pa = dc.power_analysis
         if pa is None or not pa.declared:
             b4_checks.append(
                 CheckResult(
-                    "B4.power.declared",
-                    "partial",
-                    "Power analysis not declared",
+                    "B4.power.declared", "partial", "Power analysis not declared"
                 )
             )
         else:
@@ -323,11 +307,7 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
             bad = [r.rrid for r in rrids if not _RRID_RE.match(r.rrid)]
             if bad:
                 b4_checks.append(
-                    CheckResult(
-                        "B4.rrids.valid",
-                        "fail",
-                        f"Invalid RRID format: {bad}",
-                    )
+                    CheckResult("B4.rrids.valid", "fail", f"Invalid RRID format: {bad}")
                 )
             else:
                 b4_checks.append(CheckResult("B4.rrids.valid", "pass"))
@@ -375,7 +355,7 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
             suggestions=(
                 [
                     "Lock endpoints and analysis degrees of freedom; "
-                    "separate discovery vs validation explicitly",
+                    "separate discovery vs validation explicitly"
                 ]
                 if b4_status != "pass"
                 else []
@@ -392,7 +372,7 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
             reasons=["B5 section missing"],
             suggestions=[
                 "Add at least one independent prediction with protocol, "
-                "decision rule, and independent data reference",
+                "decision rule, and independent data reference"
             ],
         )
     else:
@@ -415,7 +395,7 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
             CheckResult(
                 "B5.is_independent.true",
                 "pass" if any_ind else "fail",
-                "No prediction marked is_independent: true" if not any_ind else None,
+                None if any_ind else "No prediction marked is_independent: true",
             )
         )
 
@@ -436,8 +416,7 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
 
         if mode == "lite" and b5_status == "fail":
             has_preds_present = any(
-                c.id == "B5.predictions.present"
-                and c.status == "pass"
+                c.id == "B5.predictions.present" and c.status == "pass"
                 for c in b5_checks
             )
             if not has_preds_present:
@@ -453,8 +432,7 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
             ],
             suggestions=(
                 [
-                    "Make predictions quantitative and bind them to a pre-registered "
-                    "decision rule",
+                    "Make predictions quantitative and bind them to a pre-registered decision rule"
                 ]
                 if b5_status != "pass"
                 else []
