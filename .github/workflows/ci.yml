@@ -72,7 +72,7 @@ jobs:
 
       - name: Smoke import
         run: |
-          python -c "import echobio; print('import-ok')"
+          python -c "import verifbio; print('import-ok')"
 
       - name: Pytest (if tests exist)
         run: |

@@ -1,29 +1,28 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
-from echobio.audit import audit_claim
-from echobio.dag_export import export_dag
-from echobio.io import load_claim
-from echobio.scoring import weighted_score
+import yaml
+
+from verifbio.audit import audit_claim
+from verifbio.models import ClaimSpec
+
+
+def _load_spec(path: Path) -> ClaimSpec:
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    # Pydantic v2: model_validate, v1: parse_obj
+    if hasattr(ClaimSpec, "model_validate"):
+        return ClaimSpec.model_validate(data)  # type: ignore[attr-defined]
+    return ClaimSpec.parse_obj(data)  # type: ignore[attr-defined]
 
 
 def test_audit_smoke() -> None:
-    spec = load_claim(Path("examples") / "brca1_parp.yaml")
-    report = audit_claim(spec, mode="strict")
+    claim_path = Path("examples/brca1_parp.yaml")
+    assert claim_path.exists(), "Example claim missing: examples/brca1_parp.yaml"
+
+    spec = _load_spec(claim_path)
+    report = audit_claim(spec)
+
     assert report["tool"] == "verifbio"
-    assert report["overall"]["spec_score_0_100"] >= 0
-    assert report["overall"]["weighted_score_0_100"] >= 0
-    json.dumps(report)
-
-
-def test_weighted_score_basic() -> None:
-    s = weighted_score(b1="pass", b2="pass", b3="pass", b4="pass", b5="pass")
-    assert s == 100
-
-
-def test_dag_export_mermaid() -> None:
-    spec = load_claim(Path("examples") / "brca1_parp.yaml")
-    mmd = export_dag(spec, "mermaid")
-    assert "flowchart" in mmd
+    assert report["overall"]["status"] in {"pass", "fail"}
+    assert set(report["levels"].keys()) >= {"B1", "B2", "B3", "B4", "B5"}

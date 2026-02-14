@@ -60,29 +60,15 @@ def replace_in_file(path: Path, repls: list[tuple[re.Pattern[str], str]]) -> boo
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(
-        description="Rename EchoBio -> VerifBio across a repo."
-    )
-    ap.add_argument("--root", default=".", help="Repo root (default: .)")
-    ap.add_argument(
-        "--old",
-        default="echobio",
-        help="Old package/cli name (default: echobio)",
-    )
-    ap.add_argument(
-        "--new",
-        default="verifbio",
-        help="New package/cli name (default: verifbio)",
-    )
+    ap = argparse.ArgumentParser(description="Rename echobio -> verifbio across a repo.")
+    ap.add_argument("--root", default=".", help="Repo root")
     args = ap.parse_args()
 
     repo = Path(args.root).resolve()
-    old = args.old
-    new = args.new
 
     repls: list[tuple[re.Pattern[str], str]] = [
-        (re.compile(rf"\b{re.escape(old)}\b"), new),
-        (re.compile(rf"\b{re.escape(old.capitalize())}\b"), new.capitalize()),
+        (re.compile(r"\bechobio\b"), "verifbio"),
+        (re.compile(r"\bEchobio\b"), "Verifbio"),
         (re.compile(r"\bEchoBio\b"), "VerifBio"),
     ]
 
