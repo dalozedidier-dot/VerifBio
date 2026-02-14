@@ -61,9 +61,7 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
     out = spec.b1.variables.outcome
 
     b1_exp_status: LevelStatus = (
-        "pass"
-        if exp.get("description") and exp.get("operationalization")
-        else "fail"
+        "pass" if exp.get("description") and exp.get("operationalization") else "fail"
     )
     b1_checks.append(
         CheckResult(
@@ -77,9 +75,7 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
     )
 
     b1_out_status: LevelStatus = (
-        "pass"
-        if out.get("description") and out.get("operationalization")
-        else "fail"
+        "pass" if out.get("description") and out.get("operationalization") else "fail"
     )
     b1_checks.append(
         CheckResult(
@@ -205,10 +201,7 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
             CheckResult(
                 "B3.mechanism.declared",
                 b3_mech_status,
-                _msg(
-                    b3_mech_status,
-                    "No causal mechanism/pathway statements",
-                ),
+                _msg(b3_mech_status, "No causal mechanism/pathway statements"),
             )
         )
 
@@ -428,10 +421,7 @@ def audit_claim(spec: ClaimSpec, *, mode: Mode = "strict") -> dict[str, Any]:
             CheckResult(
                 "B5.predictions.present",
                 b5_pred_present_status,
-                _msg(
-                    b5_pred_present_status,
-                    "No independent predictions provided",
-                ),
+                _msg(b5_pred_present_status, "No independent predictions provided"),
             )
         )
 
