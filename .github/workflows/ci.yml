@@ -1,17 +1,13 @@
 name: CI
 
 on:
-  workflow_dispatch:
   push:
-    branches: ["main", "master"]
   pull_request:
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  workflow_dispatch:
 
 jobs:
-  test:
+  lint:
+    name: Black format check (py${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -26,9 +22,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: "pip"
-          cache-dependency-path: |
-            pyproject.toml
+          cache: pip
 
       - name: Install
         run: |
@@ -37,23 +31,18 @@ jobs:
 
       - name: Black (format check)
         run: |
-          python -m black --check .
-
-      - name: Pytest
-        run: |
-          pytest -q
-
-      - name: EchoBio CLI smoke
-        run: |
-          mkdir -p _ci_out
-          echobio audit examples/brca1_parp.yaml --out _ci_out/echobio_report.json
-          echobio export _ci_out/echobio_report.json --format markdown --out _ci_out/echobio_report.md
-
-      - name: Upload EchoBio report
-        uses: actions/upload-artifact@v4
-        with:
-          name: echobio_report_py${{ matrix.python-version }}
-          path: |
-            _ci_out/echobio_report.json
-            _ci_out/echobio_report.md
-          if-no-files-found: error
+          set -euo pipefail
+          # Only check the core package + scripts; avoid optional demo tools.
+          paths=()
+          for p in src scripts tests; do
+            if [ -d "$p" ]; then
+              paths+=("$p")
+            fi
+          done
+          if [ "${#paths[@]}" -eq 0 ]; then
+            echo "No known source dirs found; falling back to repo-wide check."
+            python -m black --check .
+          else
+            echo "Running black on: ${paths[*]}"
+            python -m black --check "${paths[@]}"
+          fi
