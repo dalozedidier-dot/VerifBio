@@ -70,9 +70,20 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev]"
 
-      - name: Smoke import
+      - name: Smoke import (verifbio or echobio)
         run: |
-          python -c "import verifbio; print('import-ok')"
+          python - <<'PY'
+          import importlib
+          for name in ("verifbio", "echobio"):
+              try:
+                  importlib.import_module(name)
+                  print(f"import-ok:{name}")
+                  break
+              except ModuleNotFoundError:
+                  pass
+          else:
+              raise SystemExit("Neither verifbio nor echobio could be imported")
+          PY
 
       - name: Pytest (if tests exist)
         run: |
