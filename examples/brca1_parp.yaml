@@ -1,122 +1,174 @@
 schema_version: "0.1"
 claim_id: "ECHOBIO-EX-0001"
-title: "BRCA1 loss-of-function causes HR repair deficiency leading to PARP inhibitor sensitivity"
+title: "BRCA1 loss-of-function causes homologous recombination deficiency and increases PARP inhibitor sensitivity"
 claim_type: "causal_mechanistic"
-domain_tags: ["cancer", "dna_repair", "therapy_response"]
+language: "en"
+claim_text: "BRCA1 loss-of-function impairs homologous recombination (HR), creating DNA repair dependency that increases sensitivity to PARP inhibitors."
+domain_tags: ["cancer", "dna_repair", "pharmacology", "synthetic_lethality"]
 
 b1:
   entities:
     - kind: "gene"
       name: "BRCA1"
-      ids:
-        hgnc: "HGNC:1100"
-        ensembl: "ENSG00000012048"
-    - kind: "drug"
-      name: "PARP_inhibitor"
+    - kind: "process"
+      name: "homologous_recombination"
+    - kind: "drug_class"
+      name: "PARP_inhibitors"
   context:
-    setting: "in_vivo"
+    setting: "in_vitro_and_in_vivo"
     species:
-      name: "Mus musculus"
-      tax_id: 10090
-    tissue: "mammary"
+      name: "Homo sapiens"
+      tax_id: 9606
+    tissue: "breast/ovary tumor context (cell lines and xenograft models)"
+    notes: "Primary focus is tumor cells; immune effects are out of scope for xenografts."
   variables:
     exposure_or_intervention:
       description: "BRCA1 loss-of-function"
-      operationalization: "conditional knockout in mammary epithelium"
+      operationalization: "isogenic BRCA1 knockout or patient-derived BRCA1 LOF model compared to BRCA1-proficient control"
     outcome:
-      description: "tumor burden reduction under PARP inhibitor"
-      operationalization: "tumor volume by caliper, weekly, 6 weeks"
+      description: "sensitivity to PARP inhibitors"
+      operationalization: "IC50 shift and viability reduction under fixed dosing (pre-specified assay and timepoint)"
     mediators:
-      - description: "homologous recombination repair capacity"
-        operationalization: "RAD51 foci formation assay"
+      - description: "HR proficiency proxy"
+        operationalization: "RAD51 foci formation after DNA damage"
+      - description: "DNA damage accumulation"
+        operationalization: "gamma-H2AX signal quantification at a pre-specified timepoint"
     covariates_declared:
       - "sex"
       - "age"
-      - "genetic_background"
+      - "batch"
+      - "cell_line_background"
+      - "passage_number"
 
 b2:
-  biological_scale: "organism"
+  biological_scale: "cellular_to_tissue"
   model_system:
-    description: "C57BL/6 background conditional KO model"
-    validity_notes: "Limitation: strain-specific immune response"
+    description: "isogenic human tumor cell lines (BRCA1 KO vs WT) plus an independent xenograft or PDX validation cohort"
+    validity_notes: "xenografts/PDX have limited immune context; translation to immune-competent settings is not claimed."
   boundaries:
-    time_window: "treatment starts at tumor size 100-150 mm^3; follow-up 6 weeks"
-    spatial_scope: "primary mammary tumors only"
+    time_window: "in vitro: 72h drug exposure; in vivo: primary endpoint at day 21 post-treatment start"
+    spatial_scope: "primary tumor response; no metastasis claim"
     generalization_limits:
-      - "Not claiming direct clinical efficacy in humans"
+      - "not claimed for HR-proficient tumors"
+      - "not claimed for non-BRCA1 HRD mechanisms unless explicitly tested"
+      - "drug-class claim limited to clinically relevant PARP inhibitors at pre-specified doses"
+      - "no claim about long-term resistance evolution in this specification"
 
 b3:
   causal_model:
     type: "pathway"
     statements:
-      - "BRCA1 LOF decreases HR repair capacity"
-      - "HR deficiency increases reliance on PARP-mediated repair"
-      - "PARP inhibition induces synthetic lethality in HR-deficient cells"
+      - "BRCA1_LOF -> HR_deficiency"
+      - "HR_deficiency -> DNA_damage_accumulation"
+      - "HR_deficiency -> PARP_inhibitor_sensitivity"
   dag:
     nodes:
-      - "BRCA1_status"
-      - "HR_capacity"
-      - "PARP_inhibitor"
-      - "tumor_burden"
+      - "BRCA1_LOF"
+      - "HR_deficiency"
+      - "DNA_damage_accumulation"
+      - "PARP_inhibitor_sensitivity"
+      - "cell_line_background"
+      - "passage_number"
+      - "drug_batch"
+      - "assay_batch"
       - "sex"
       - "age"
-      - "genetic_background"
     edges:
-      - ["BRCA1_status", "HR_capacity"]
-      - ["HR_capacity", "tumor_burden"]
-      - ["PARP_inhibitor", "tumor_burden"]
-      - ["sex", "tumor_burden"]
-      - ["age", "tumor_burden"]
-      - ["genetic_background", "tumor_burden"]
+      - ["BRCA1_LOF", "HR_deficiency"]
+      - ["HR_deficiency", "DNA_damage_accumulation"]
+      - ["HR_deficiency", "PARP_inhibitor_sensitivity"]
+      - ["cell_line_background", "PARP_inhibitor_sensitivity"]
+      - ["passage_number", "PARP_inhibitor_sensitivity"]
+      - ["drug_batch", "PARP_inhibitor_sensitivity"]
+      - ["assay_batch", "PARP_inhibitor_sensitivity"]
+      - ["sex", "PARP_inhibitor_sensitivity"]
+      - ["age", "PARP_inhibitor_sensitivity"]
   confounders:
     listed:
-      - name: "genetic_background"
-        control_strategy: "use littermate controls; single background"
+      - name: "cell_line_background"
+        control_strategy: "use isogenic pairs; include background as a fixed factor when multiple lines are used"
+      - name: "passage_number"
+        control_strategy: "match passage windows; record and include as covariate if drift suspected"
+      - name: "assay_batch"
+        control_strategy: "block randomize plate layouts; include batch in model; predefine QC thresholds"
+      - name: "drug_batch"
+        control_strategy: "single lot where possible; otherwise record lot and include as factor"
+      - name: "off_target_editing"
+        control_strategy: "use multiple independent clones; rescue with BRCA1 re-expression where feasible"
+      - name: "transfection_or_delivery_efficiency"
+        control_strategy: "normalize to delivery marker; exclude failed delivery by pre-specified QC rules"
       - name: "sex"
-        control_strategy: "sex-balanced randomization; sex-stratified analysis"
+        control_strategy: "include both sexes where applicable; stratify randomization; report sex-stratified outcomes"
       - name: "age"
-        control_strategy: "age-matched enrollment"
+        control_strategy: "age-matched cohorts; narrow inclusion window; report distributions"
+      - name: "immune_context"
+        control_strategy: "not applicable for in vitro; for xenografts, explicitly declare immune limitation as boundary"
+  identification_notes:
+    - "In isogenic designs, many confounders are structurally controlled; remaining confounders are batch, passage, and delivery."
+    - "Causal direction is evaluated via perturbation (BRCA1 LOF and BRCA1 rescue) rather than purely observational associations."
 
 b4:
   design_controls:
-    randomization: "block randomization by litter and sex"
-    blinding: "tumor measurements blinded to genotype and treatment"
+    randomization: "randomize treatment allocation; plate layout randomization; mouse randomization within sex strata"
+    blinding: "blinded outcome measurement (sample labels masked during viability scoring and tumor measurement)"
+    sabv: "yes"
     power_analysis:
       declared: true
-      endpoint: "tumor volume at week 6"
-      effect_size_assumption: "30% reduction"
+      endpoint: "primary endpoint (viability IC50 in vitro; tumor volume at day 21 in vivo)"
       alpha: 0.05
       power: 0.8
-      planned_n_per_group: 12
+      planned_n_per_group: 10
+      effect_size_assumption: "detect >= 20% difference in primary endpoint under pre-specified model"
     exclusion_criteria:
-      - "baseline tumor outside 100-150 mm^3"
-      - "unexpected illness unrelated to tumor"
+      - "pre-specified assay QC failure (e.g., control wells outside tolerance)"
+      - "in vivo: baseline tumor volume outside inclusion range"
+      - "failed delivery or genotype confirmation failure"
     analysis_plan:
-      primary_endpoint: "tumor volume at week 6"
+      primary_endpoint: "PARP inhibitor sensitivity (IC50 shift in vitro; tumor volume change at day 21 in vivo)"
       secondary_endpoints:
-        - "time to progression"
-        - "RAD51 foci count"
+        - "RAD51 foci formation"
+        - "gamma-H2AX signal"
       multiple_testing:
-        correction: "Benjamini-Hochberg"
-      outlier_handling: "pre-specified: exclude only measurement errors with documented cause"
+        correction: "BH"
+        family: "secondary endpoints only"
+      outlier_handling: "pre-specified QC-based exclusion only; no post-hoc removal"
   resources:
-    rrids: []
+    rrids:
+      - kind: "cell_line"
+        rrid: "RRID:CVCL_0031"
+        description: "MCF-7 human breast cancer cell line (example)"
+      - kind: "antibody"
+        rrid: "RRID:AB_123456"
+        description: "example antibody RRID placeholder"
   circularity_guards:
     discovery_data:
-      - "pilot_dataset_2024_ko_response"
+      - "dataset_discovery_brca1_isogenic_2024"
     validation_data:
-      - "independent_cohort_2025_ko_response"
-    notes: "Prediction tests on validation_data only"
+      - "dataset_validation_pdx_2025"
+    notes: "Exploratory analyses are separated from confirmatory tests; confirmatory protocol and endpoints are pre-registered (registry ID to be inserted). No overlap between discovery and validation datasets."
 
 b5:
   independent_predictions:
     - prediction_id: "P1"
       is_independent: true
-      statement: "In an independent cohort, BRCA1 KO tumors will show >= 25% lower week-6 volume under PARP inhibitor vs controls"
+      statement: "In an independent validation model not used for discovery, BRCA1 LOF will reduce PARP inhibitor IC50 by at least 2-fold compared to BRCA1-proficient control."
       test_protocol:
-        measurement: "tumor volume weekly; primary endpoint week 6"
-        decision_rule: "success if mean reduction >= 25% with pre-registered analysis"
+        measurement: "pre-specified viability assay at 72h; dose-response with fixed concentration grid"
+        decision_rule: "success if geometric mean IC50 ratio (WT/LOF) >= 2.0 under locked analysis"
+        blinding: "labels masked during scoring"
       data_reference:
-        dataset_id: "independent_cohort_2025_ko_response"
+        dataset_id: "dataset_validation_pdx_2025"
       falsifiers:
-        - "No difference or opposite direction under blinded measurement"
+        - "IC50 ratio < 2.0 under the locked decision rule"
+        - "no increase in DNA damage proxies despite BRCA1 LOF"
+    - prediction_id: "P2"
+      is_independent: true
+      statement: "BRCA1 rescue (re-expression) in a BRCA1 LOF background will restore HR proxy (RAD51 foci) and attenuate PARP inhibitor sensitivity in an independent clone."
+      test_protocol:
+        measurement: "RAD51 foci and IC50 in an independent rescue clone; same locked timepoint"
+        decision_rule: "success if RAD51 foci increase and IC50 ratio (LOF/rescue) >= 1.5 under locked analysis"
+      data_reference:
+        dataset_id: "dataset_validation_rescue_clone_2025"
+      falsifiers:
+        - "RAD51 foci unchanged after rescue"
+        - "IC50 ratio < 1.5 under the locked rule"
