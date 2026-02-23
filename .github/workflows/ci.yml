@@ -116,11 +116,20 @@ jobs:
           import sys, importlib
           print("PYTHONPATH:", "src")
           print("sys.path[0:8]:", sys.path[:8])
-          for name in ("verifbio", "echobio"):
+          for name in ("verifbio",):
               try:
                   m = importlib.import_module(name)
                   print("import-ok:", name, "->", getattr(m, "__file__", None))
-                  break
+              except Exception as e:
+                  print("import-fail:", name, type(e).__name__, str(e))
+                  raise
+          # also check echobio shim
+          try:
+              m2 = importlib.import_module("echobio")
+              print("import-ok:", "echobio", "->", getattr(m2, "__file__", None))
+          except Exception as e:
+              print("import-fail:", "echobio", type(e).__name__, str(e))
+              raise
               except Exception as e:
                   print("import-fail:", name, type(e).__name__, str(e))
           PY
@@ -136,15 +145,24 @@ jobs:
         run: |
           python - <<'PY'
           import importlib
-          for name in ("verifbio", "echobio"):
+          for name in ("verifbio",):
               try:
-                  importlib.import_module(name)
-                  print(f"import-ok:{name}")
-                  break
+                  m = importlib.import_module(name)
+                  print("import-ok:", name, "->", getattr(m, "__file__", None))
+              except Exception as e:
+                  print("import-fail:", name, type(e).__name__, str(e))
+                  raise
+          # also check echobio shim
+          try:
+              m2 = importlib.import_module("echobio")
+              print("import-ok:", "echobio", "->", getattr(m2, "__file__", None))
+          except Exception as e:
+              print("import-fail:", "echobio", type(e).__name__, str(e))
+              raise
               except ModuleNotFoundError:
                   pass
           else:
-              raise SystemExit("Neither verifbio nor echobio could be imported")
+              raise SystemExit("verifbio could not be imported")
           PY
 
       - name: Pytest (if tests exist)

@@ -5,7 +5,7 @@ This pack aligns the project name "VerifBio" with the Python package and CI.
 It includes:
 - CI workflow importing `verifbio`
 - A smoke test that validates the report `tool` id is `verifbio`
-- Rename scripts to move `src/echobio` -> `src/verifbio` and rewrite text references
+- Rename scripts to move `src/verifbio` -> `src/verifbio` and rewrite text references
 
 Apply:
 

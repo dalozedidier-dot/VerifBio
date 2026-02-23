@@ -1,12 +1,12 @@
-# Rename EchoBio -> VerifBio
+# Rename VerifBio -> VerifBio
 
 This pack renames the tool at 3 levels:
 
 1) Package directory:
-- `src/echobio` -> `src/verifbio`
+- `src/verifbio` -> `src/verifbio`
 
 2) CLI:
-- `echobio ...` -> `verifbio ...` (console script entry in `pyproject.toml`)
+- `verifbio ...` -> `verifbio ...` (console script entry in `pyproject.toml`)
 
 3) Documentation and workflows:
 - README, examples, CI workflows updated to the new name
@@ -20,7 +20,7 @@ bash scripts/rename_to_verifbio.sh
 git status
 git diff
 git add -A
-git commit -m "chore: rename EchoBio to VerifBio"
+git commit -m "chore: rename VerifBio to VerifBio"
 git push
 ```
 

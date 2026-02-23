@@ -3,9 +3,9 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "echobio"
-version = "0.2.3"
-description = "EchoBio audits biological hypothesis specification quality (not truth)."
+name = "verifbio"
+version = "0.3.0"
+description = "VerifBio audits biological hypothesis specification quality (not truth)."
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
@@ -22,11 +22,12 @@ dev = [
 ]
 
 [project.scripts]
+verifbio = "verifbio.cli:main"
 echobio = "echobio.cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-packages = ["echobio"]
+packages = ["verifbio", "echobio"]
 
 [tool.black]
 line-length = 88

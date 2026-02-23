@@ -1,7 +1,7 @@
 # Finalize rename to VerifBio
 
-Your CI is currently green, but the install still reports `echobio==...` and the import path in CI selects `echobio`.
-That means the repository name is VerifBio, but the Python distribution and package are still `echobio`.
+Your CI is currently green, but the install still reports `verifbio==...` and the import path in CI selects `verifbio`.
+That means the repository name is VerifBio, but the Python distribution and package are still `verifbio`.
 
 This pack provides a single script to finalize the rename in a reproducible way.
 
